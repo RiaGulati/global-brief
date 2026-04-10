@@ -1,6 +1,4 @@
-import { db } from "./db";
-import { stories, type Story, type InsertStory } from "@shared/schema";
-import { eq, like, or } from "drizzle-orm";
+import type { Story, InsertStory } from "@shared/schema";
 
 export interface IStorage {
   getAllStories(): Story[];
@@ -13,41 +11,49 @@ export interface IStorage {
   getStoryCount(): number;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemoryStorage implements IStorage {
+  private stories: Story[] = [];
+  private nextId = 1;
+
   getAllStories(): Story[] {
-    return db.select().from(stories).all();
+    return this.stories;
   }
 
   getStoryById(id: number): Story | undefined {
-    return db.select().from(stories).where(eq(stories.id, id)).get();
+    return this.stories.find((s) => s.id === id);
   }
 
   getStoriesByRegion(region: string): Story[] {
-    return db.select().from(stories).where(eq(stories.region, region)).all();
+    return this.stories.filter((s) => s.region === region);
   }
 
   getStoriesByTopic(topic: string): Story[] {
-    return db.select().from(stories).where(eq(stories.topic, topic)).all();
+    return this.stories.filter((s) => s.topic === topic);
   }
 
   getCommonGroundStories(): Story[] {
-    return db.select().from(stories).where(eq(stories.isCommonGround, true)).all();
+    return this.stories.filter((s) => s.isCommonGround);
   }
 
   getStillDevelopingStories(): Story[] {
-    return db.select().from(stories).where(eq(stories.isStillDeveloping, true)).all();
+    return this.stories.filter((s) => s.isStillDeveloping);
   }
 
   seedStories(data: InsertStory[]): void {
     for (const story of data) {
-      db.insert(stories).values(story).run();
+      this.stories.push({
+        id: this.nextId++,
+        isCommonGround: false,
+        isStillDeveloping: false,
+        changedInLast24h: null,
+        ...story,
+      } as Story);
     }
   }
 
   getStoryCount(): number {
-    const result = db.select().from(stories).all();
-    return result.length;
+    return this.stories.length;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemoryStorage();
