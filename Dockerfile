@@ -1,40 +1,38 @@
 # Global Brief — Dockerfile
-# Multi-stage build: build the app, then run it in a lean image
+# Uses node:20 (Debian-based) so better-sqlite3 compiles without issues
 
-# ── Stage 1: Build ─────────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Install build tools needed for better-sqlite3 (node-gyp)
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+
+# Install ALL deps (including devDeps needed for build)
 COPY package*.json ./
 RUN npm ci
 
-# Copy source
+# Copy source and build
 COPY . .
-
-# Build frontend + backend
 RUN npm run build
 
-# ── Stage 2: Production runtime ─────────────────────────────────────────────────
-FROM node:20-alpine AS runner
+# ── Production image ────────────────────────────────────────────────────────────
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=5000
 
-# Only copy what's needed to run
+# Install build tools again for better-sqlite3 in production install
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+
+# Copy built output and package files
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
-# Install production deps only (for better-sqlite3)
+# Install production deps (better-sqlite3 needs to compile here too)
 RUN npm ci --omit=dev
 
-# Expose the app port
-EXPOSE 5000
-
-# SQLite DB persists in /app/data.db — mount a volume here for persistence
-# VOLUME ["/app"]
+EXPOSE 3000
 
 CMD ["node", "dist/index.cjs"]
