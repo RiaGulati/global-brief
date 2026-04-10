@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  global-brief:
+    build: .
+    container_name: global-brief
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    volumes:
+      # Persist the SQLite database across container restarts
+      - ./data:/app/data
+    restart: unless-stopped

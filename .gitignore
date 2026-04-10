@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# SQLite database files (runtime data — do not commit)
+*.db
+*.db-shm
+*.db-wal
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Drizzle migrations (generated — not committed unless you pin schema)
+migrations/
+
+# Temporary files
+tmp/
+.tmp/
