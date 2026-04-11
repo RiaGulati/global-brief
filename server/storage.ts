@@ -8,6 +8,7 @@ export interface IStorage {
   getCommonGroundStories(): Story[];
   getStillDevelopingStories(): Story[];
   seedStories(data: InsertStory[]): void;
+  replaceAllStories(data: InsertStory[]): void;
   getStoryCount(): number;
 }
 
@@ -43,12 +44,19 @@ export class MemoryStorage implements IStorage {
     for (const story of data) {
       this.stories.push({
         id: this.nextId++,
-        isCommonGround: false,
-        isStillDeveloping: false,
-        changedInLast24h: null,
+        isCommonGround: story.isCommonGround ?? false,
+        isStillDeveloping: story.isStillDeveloping ?? false,
+        changedInLast24h: story.changedInLast24h ?? null,
         ...story,
       } as Story);
     }
+  }
+
+  /** Wipe existing stories and replace with fresh enriched data */
+  replaceAllStories(data: InsertStory[]): void {
+    this.stories = [];
+    this.nextId = 1;
+    this.seedStories(data);
   }
 
   getStoryCount(): number {
